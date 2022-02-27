@@ -33,6 +33,14 @@ const sessionOptions = {
 };
 app.use(session(sessionOptions));
 
+// Creating a middleware to validate the login on multiples pages
+const requireLogin = (req, res, next) => {
+  if (!req.session.user_id) {
+    return res.redirect("/login");
+  }
+  next();
+};
+
 // Home Page to redirect user
 app.get("/", (req, res) => {
   res.send("THIS IS THE HOME PAGE, GO TO /LOGIN");
@@ -90,12 +98,24 @@ app.post("/login", async (req, res) => {
   }
 });
 
+app.post("/logout", (req, res) => {
+  req.session.user_id = null;
+  //   Or we can use
+  //   req.session.destroy();
+  res.redirect("/login");
+});
+
 // The route we will be protected
-app.get("/secret", (req, res) => {
-  if (!req.session.user_id) {
-    res.redirect("/login");
-  }
-  res.send("This Is the Secret");
+// app.get("/secret", (req, res) => {
+//   if (!req.session.user_id) {
+//     return res.redirect("/login");
+//   }
+//   res.render("secret");
+// });
+
+// After we create the middleware to validate the login
+app.get("/secret", requireLogin, (req, res) => {
+  res.render("secret");
 });
 
 app.listen(3000, () => {
